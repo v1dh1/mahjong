@@ -7,14 +7,13 @@ import tile
 
 
 #to do
-# Vidhi working on Deck States
+# Vidhi working on Deck States DONEEEEEE
 # Elle working on running the game  - figure out how to simulat other player's choices
 # Optimization code, call that in this simulator
     #reward function
 # Separate file where we run this n times, and calculate the win rate
 
 # figure out what and where nevedhaa to add to 
-
 
 
 class Game:
@@ -47,6 +46,8 @@ class Game:
         simulator_player.simulator = True
         print(f"🖥️ Simulator: {simulator_player.name} -> {simulator_player.wind}")
 
+
+#####FINDING STATES!!!!!!
     def print_tile_states(self):
             print("\n--- Deck ---")
             for t in self.deck.tiles:
@@ -60,11 +61,24 @@ class Game:
             print("\n--- Discard pile ---")
             for t in self.discard_pile:
                 print(t)
-
-            for index, i in enumerate(Deck().tiles):
-                print(index, [i], f"Tile: {i.suit} {i.tileno}, State: {i.state}")
-
-                
+            
+            totalOne = 0
+            totalTwo = 0
+            totalThree = 0
+            none = []
+            for index, i in enumerate(self.deck.all_tiles): #all_tiles has all the states 
+                if i.state == 0:
+                    totalOne += 1
+                elif i.state == 1:
+                    totalTwo += 1
+                elif i.state == 2:
+                    totalThree += 1
+                elif i.state != 0 and i.state !=1 and i.state !=2:
+                    none.append(i)
+                    
+            print(index, [i], f"Tile: {i.suit} {i.tileno}, State: {i.state}")
+            print("total state 1:", totalOne, "total state 2:", totalTwo, "total state 3:", totalThree, "\n") 
+            print("none of the above:", none)
     def start(self):
         print("🔄 Shuffling deck...")
         self.deck.shuffle()
@@ -130,6 +144,8 @@ class Game:
                 print("No more available tiles to draw!")
                 break
 
+
+            #---- RANDOM OPTION -----#
             tile_to_draw = random.choice(available_tiles)
             player.draw_tile(tile_to_draw)
             print("before deck", len(self.deck.tiles))
@@ -138,16 +154,16 @@ class Game:
             print("after deck", len(self.deck.tiles))
             print(f"{player.name} draws {tile_to_draw}")
             
-
-            # Randomly discard a tile from hand
             discard_tile = random.choice(player.hand)
             discard_tile.state = 2
             print("player hand before discard", len(player.hand))
             player.hand.remove(discard_tile)
             print("player hand after discard", len(player.hand))
             self.discard_pile.append(discard_tile)
-
             print(f"{player.name} discards {discard_tile}\n")
+
+
+            #-----NON RANDOM OPTION ----#
 
     def play_game(self):
         """Keep playing rounds until deck is empty or someone wins."""

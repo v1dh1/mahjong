@@ -2,8 +2,10 @@ from deck import Deck
 from player import Player
 from tile import Tile
 import random
-
+from agent import MahjongAgent
 import tile
+import requests
+
 
 
 #to do
@@ -14,7 +16,6 @@ import tile
 # Separate file where we run this n times, and calculate the win rate
 
 # figure out what and where nevedhaa to add to 
-
 
 class Game:
     def __init__(self):
@@ -76,110 +77,51 @@ class Game:
                 elif i.state != 0 and i.state !=1 and i.state !=2:
                     none.append(i)
                     
-            print(index, [i], f"Tile: {i.suit} {i.tileno}, State: {i.state}")
+            print(index, [i], f"Tile: {i.suit} {i.value}, State: {i.state}")
             print("total state 1:", totalOne, "total state 2:", totalTwo, "total state 3:", totalThree, "\n") 
             print("none of the above:", none)
+
+            
     def start(self):
         print("🔄 Shuffling deck...")
         self.deck.shuffle()
         self.assign_seats()
         self.assign_simulator() 
-        print("🀄 Dealing initial hands...\n")
 
-        # Deal 13 tiles to each player
-        # Deal 13 tiles to each player
+        print("🀄 Dealing initial hands...\n")
         for _ in range(13):
             for p in self.players:
-                # Only simulator player's tiles are 1
-                p.draw_tile(self.deck.draw(), is_simulator=p.simulator)
+                tile = self.deck.draw()
+                p.draw_tile(tile, is_simulator=p.simulator)
 
-        # Dealer (Player 1) draws the 14th tile
+        # Dealer draws 14th tile
         dealer = self.players[0]
         dealer.draw_tile(self.deck.draw(), is_simulator=dealer.simulator)
 
-        print(f"Dealer starting hand (14 tiles):")
-        print(dealer.hand, "\n")
+        print(f"Dealer starting hand (14 tiles): {dealer.hand}\n")
 
         # Dealer discards the 14th tile
         discard = dealer.discard_tile()
         self.discard_pile.append(discard)
-
-        
-        print("length of discard tile:", len(self.discard_pile))
-        print("length of deck", len(self.deck.tiles))        
-        print("state of discarded tile:", discard.state)
-
-       
         print(f"🗑️ Dealer discards: {discard}\n")
 
-
-
-        print("Other players' hands:")
-        for p in self.players[1:]:
-            print(p, "\n")
-
-        print("Game initialized — ready for next turn.")
-        self.play_round()
-        self.print_tile_states()
-        
-
-    
-
-    def play_round(self):
-        print ("⭕️ STARTING A ROUND ⭕️")
-        # Define turn order
-        turn_order = ["East", "North", "West", "South"]
-
-        for wind in turn_order:
-            # Find the player with this wind
-            player = next(p for p in self.players if p.wind == wind)
-
-            # Simulator message
-            if player.simulator:
-                print(f"🖥️ Simulator {player.name} is playing")
-
-            # Draw a random tile with state 0
-            available_tiles = [t for t in self.deck.tiles if t.state == 0]
-            if not available_tiles:
-                print("No more available tiles to draw!")
-                break
-
-
-            #---- RANDOM OPTION -----#
-            tile_to_draw = random.choice(available_tiles)
-            player.draw_tile(tile_to_draw)
-            print("before deck", len(self.deck.tiles))
-            # Remove the drawn tile from deck (already marked state=1 in draw_tile)
-            self.deck.tiles.remove(tile_to_draw)
-            print("after deck", len(self.deck.tiles))
-            print(f"{player.name} draws {tile_to_draw}")
-            
-            discard_tile = random.choice(player.hand)
-            discard_tile.state = 2
-            print("player hand before discard", len(player.hand))
-            player.hand.remove(discard_tile)
-            print("player hand after discard", len(player.hand))
-            self.discard_pile.append(discard_tile)
-            print(f"{player.name} discards {discard_tile}\n")
-
-
-            #-----NON RANDOM OPTION ----#
+        print("Game initialized — starting automated simulation...\n")
+        self.play_game()
 
     def play_game(self):
-        """Keep playing rounds until deck is empty or someone wins."""
+        """Automated game loop until deck empty or someone wins."""
         round_number = 1
+        simulator_agent = MahjongAgent(self)
 
         while True:
             print(f"\n=== Round {round_number} ===")
-
-            # Play one round
-            self.play_round()
+            self.play_round(simulator_agent)
 
             # Check for winner
             for p in self.players:
                 if p.check_win():
                     print(f"🏆 {p.name} wins the game!")
-                    return  # Stop the game
+                    return
 
             # Check if there are any available tiles left
             available_tiles = [t for t in self.deck.tiles if t.state == 0]
@@ -188,5 +130,65 @@ class Game:
                 return
 
             round_number += 1
+
+
+    ## AI ATTEMPT
+    def get_ai_move(self, player):
+        url = "http://localhost:80/api/ai_move"
+         # Build the game state for AI
+        game_state = {
+        "hand": [str(t) for t in player.hand],  # convert Tile objects to strings
+        "discard_pile": [str(t) for t in self.discard_pile],
+        "round": 1  # you can track round numbers if you want
+        }
+        try:
+            response = requests.post(url, json={"game_state": game_state})
+            response.raise_for_status()  # raise an exception if HTTP error
+            move = response.json()["move"]  # e.g., "discard 5m"
+            print("!!!!!!ai worked!!!!!!")
+            print("AI move:", response.json())
+            return move  # <-- indented inside try
+        except Exception as e:
+            print(f"⚠️ AI request failed: {e}")
+            # fallback to random discard
+            random_tile = random.choice(player.hand)
+            return f"discard {str(random_tile)}"
+
+    def play_round(self, simulator_agent):
+        """Each player takes a turn. Simulator uses Q-function."""
+        turn_order = ["East", "North", "West", "South"]
+
+        for wind in turn_order:
+            player = next(p for p in self.players if p.wind == wind)
+
+            # Draw tile
+            tile_to_draw = self.deck.draw_random_state0()
+            if not tile_to_draw:
+                print("No more available tiles to draw! Wall empty.")
+                return
+
+            player.draw_tile(tile_to_draw, is_simulator=player.simulator)
+            print(f"{player.name} draws {tile_to_draw}")
+
+
+            # Decide discard
+            if player.simulator:
+                discard_tile = simulator_agent.select_discard(player)
+                print(f"🖥️ Simulator {player.name} chooses discard: {discard_tile}")
+            else:
+                ai_move = self.get_ai_move(player)  # <-- call AI
+                discard_tile_code = ai_move.split()[1]  # get "5m" from "discard 5m"
+                discard_tile = next(t for t in player.hand if str(t) == discard_tile_code)
+                print(f"{player.name} discards using AI: {discard_tile}")
+            #if player.simulator:
+                #discard_tile = simulator_agent.select_discard(player)
+                #print(f"🖥️ Simulator {player.name} chooses discard: {discard_tile}")
+            #else:
+                #discard_tile = random.choice(player.hand)
+                #print(f"{player.name} discards randomly: {discard_tile}")
+
+            discard_tile.state = 2
+            player.hand.remove(discard_tile)
+            self.discard_pile.append(discard_tile)
             
 

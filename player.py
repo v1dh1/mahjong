@@ -5,7 +5,7 @@ from collections import Counter
 # 'A' = fast/simple (len(hand) >= 14)
 # 'B' = heuristic (quick check: at least one pong+pair and remaining can form melds)
 # 'C' = realistic full check (4 melds + 1 pair)
-WIN_MODE = "A"   # <--- set default to A as you requested
+WIN_MODE = "B"   # <--- set default to A as you requested
 
 class Player:
     def __init__(self, name):

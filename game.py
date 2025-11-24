@@ -35,7 +35,7 @@ class Game:
         for player, wind in zip(self.players, winds):
             # assign each player to a wind (their order to play in) 
             # zip pairs elements from 2 or more lists together, player 1 gets the first item, player 2 the second, and so forth
-            player.wind = wind
+            player.wind = wind ##adding another attribute to player class
 
         # print it out 
         print("🎲 Seats assigned:")
@@ -96,7 +96,7 @@ class Game:
                 p.draw_tile(tile, is_simulator=p.simulator)
 
         # Dealer draws 14th tile
-        dealer = self.players[0]
+        dealer = next(p for p in self.players if p.wind == "East")
         dealer.draw_tile(self.deck.draw(), is_simulator=dealer.simulator)
 
         print(f"Dealer starting hand (14 tiles): {dealer.hand}\n")
@@ -125,10 +125,10 @@ class Game:
                     return
 
             # Check if there are any available tiles left
-            available_tiles = [t for t in self.deck.tiles if t.state == 0]
-            if not available_tiles:
+            if not self.deck.tiles:
                 print("No more tiles left in the deck. Game ends in a draw.")
                 return
+
 
             round_number += 1
 
@@ -157,13 +157,13 @@ class Game:
 
     def play_round(self, simulator_agent):
         """Each player takes a turn. Simulator uses Q-function."""
-        turn_order = ["East", "North", "West", "South"]
+        turn_order = ["East", "South", "West", "North"]
 
         for wind in turn_order:
             player = next(p for p in self.players if p.wind == wind)
 
             # Draw tile
-            tile_to_draw = self.deck.draw_random_state0()
+            tile_to_draw = self.deck.draw()
             if not tile_to_draw:
                 print("No more available tiles to draw! Wall empty.")
                 return

@@ -4,7 +4,7 @@ from tile import Tile
 import random
 from agent import MahjongAgent
 import tile
-import requests
+from monte_carlo_ai import MonteCarloAI
 
 
 
@@ -24,6 +24,7 @@ class Game:
         print("length of deck", len(Deck().tiles))
         self.players = [Player(f"Player {i+1}") for i in range(4)]
         self.discard_pile = []
+        self.mc_ai = MonteCarloAI(simulations=100)
 
     def assign_seats(self):
         print ("💺 Randomly assign seats (wind directions) to the 4 players.")
@@ -175,11 +176,14 @@ class Game:
             if player.simulator:
                 discard_tile = simulator_agent.select_discard(player)
                 print(f"🖥️ Simulator {player.name} chooses discard: {discard_tile}")
+
             else:
-                ai_move = self.get_ai_move(player)  # <-- call AI
-                discard_tile_code = ai_move.split()[1]  # get "5m" from "discard 5m"
-                discard_tile = next(t for t in player.hand if str(t) == discard_tile_code)
-                print(f"{player.name} discards using AI: {discard_tile}")
+                discard_tile = self.mc_ai.choose_discard(player, self)
+                print(f"{player.name} discards using Monte Carlo AI: {discard_tile}")
+                #ai_move = self.get_ai_move(player)  # <-- call AI
+                #discard_tile_code = ai_move.split()[1]  # get "5m" from "discard 5m"
+                #discard_tile = next(t for t in player.hand if str(t) == discard_tile_code)
+                #print(f"{player.name} discards using AI: {discard_tile}")
             #if player.simulator:
                 #discard_tile = simulator_agent.select_discard(player)
                 #print(f"🖥️ Simulator {player.name} chooses discard: {discard_tile}")

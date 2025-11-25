@@ -3,7 +3,6 @@ from player import Player
 from tile import Tile
 import random
 from agent import MahjongAgent
-import tile
 from monte_carlo_ai import MonteCarloAI
 
 
@@ -120,6 +119,7 @@ class Game:
 
             # Check for winner
             for p in self.players:
+                print("P in Players", p)
                 if p.check_win():
                     print(f"🏆 {p.name} wins the game!")
                     return
@@ -131,29 +131,6 @@ class Game:
 
 
             round_number += 1
-
-
-    ## AI ATTEMPT
-    def get_ai_move(self, player):
-        url = "http://localhost:80/api/ai_move"
-         # Build the game state for AI
-        game_state = {
-        "hand": [str(t) for t in player.hand],  # convert Tile objects to strings
-        "discard_pile": [str(t) for t in self.discard_pile],
-        "round": 1  # you can track round numbers if you want
-        }
-        try:
-            response = requests.post(url, json={"game_state": game_state})
-            response.raise_for_status()  # raise an exception if HTTP error
-            move = response.json()["move"]  # e.g., "discard 5m"
-            print("!!!!!!ai worked!!!!!!")
-            print("AI move:", response.json())
-            return move  # <-- indented inside try
-        except Exception as e:
-            print(f"⚠️ AI request failed: {e}")
-            # fallback to random discard
-            random_tile = random.choice(player.hand)
-            return f"discard {str(random_tile)}"
 
     def play_round(self, simulator_agent):
         """Each player takes a turn. Simulator uses Q-function."""

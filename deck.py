@@ -2,6 +2,15 @@
 from tile import Tile
 import random
 
+'''
+This module defines the Deck class for a Mahjong game. 
+The Deck class is responsible for creating,
+shuffling, and managing the collection of Mahjong tiles. 
+It includes methods to build the full set of tiles,
+shuffle them, and draw tiles from the deck.
+'''
+
+
 class Deck:
     def __init__(self):
         self.tiles = []

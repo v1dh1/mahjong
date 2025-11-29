@@ -4,7 +4,7 @@ class Tile:
     Tile(suit, value, copy_no)
     suit: "Dots" | "Bamboo" | "Characters" | "Wind" | "Dragon"
     value: int for suits (1-9) or string for honors ("East","Red",etc.)
-    copy_no: 1..4 to differentiate identical copies
+    copy_no:   f1..4 to differentiate identical copies
     state: 0=wall/unseen, 1=in-hand, 2=discarded
     """
 
